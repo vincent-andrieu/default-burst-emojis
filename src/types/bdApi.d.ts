@@ -9,6 +9,7 @@ declare const BdApi: BdApiInstance;
 declare module BdApiModule {
     export const React: React;
     export const ReactDOM: any;
+    export const Plugins: Plugins;
     export const Components: Components;
     export const Data: Data;
     export const DOM: DOM;
@@ -28,6 +29,10 @@ type React = {
     createElement(component: string, props?: any, ...children: Array<Node | string | Array<Node | string>>): HTMLElement;
     createElement<T extends Components[keyof Components]>(component: T | string, props?: Parameters<T>[0] | any, ...children: Array<Node | string | Array<Node | string>>): HTMLElement;
 };
+
+type Plugins = {
+    disable(id: string): void;
+}
 
 const Looks = Object.freeze({
     FILLED: "bd-button-filled",

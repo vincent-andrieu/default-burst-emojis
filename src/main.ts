@@ -1,20 +1,33 @@
-import { DiscordPickerIntention, LOG_PREFIX } from "./constants";
+import { DiscordPickerIntention, DiscordPremiumType, LOG_PREFIX } from "./constants";
 import { config, getSetting, SETTING_BURST_EMOJIS_PICKER, SETTING_BURST_SHORTCUT_REACTIONS } from "./settings";
-import { LogLevel, SettingConfigElement, SettingItem } from "./types";
+import { LogLevel, SettingConfigElement, SettingItem, UserStore } from "./types";
 
 export default class BDiscordAI {
     private _emojiPickerPatch: ReturnType<typeof BdApi.Patcher.before> | undefined = undefined;
     private _shortcutReactionsPatch: ReturnType<typeof BdApi.Patcher.before> | undefined = undefined;
 
     start() {
-        this._burstEmojisPicker();
-        this._burstShortcutReactions();
+        console.warn(LOG_PREFIX, "Started");
+        const userStore = BdApi.Webpack.getStore<UserStore>("UserStore");
+        const user = userStore?.getCurrentUser();
+
+        if (!user) {
+            return this._log("Fail to get current user");
+        }
+        if (user.premiumType != DiscordPremiumType.NONE) {
+            this._burstEmojisPicker();
+            this._burstShortcutReactions();
+        } else {
+            this._log("This plugin only works for Nitro users", "warn");
+            BdApi.Plugins.disable(config.name);
+        }
     }
 
     stop() {
         BdApi.Patcher.unpatchAll(config.name);
         this._emojiPickerPatch = undefined;
         this._shortcutReactionsPatch = undefined;
+        console.warn(LOG_PREFIX, "Stopped");
     }
 
     getSettingsPanel() {
