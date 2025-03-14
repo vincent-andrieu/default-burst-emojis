@@ -99,8 +99,8 @@ export default class BDiscordAI {
             if (props.pickerIntention === DiscordPickerIntention.REACTION && isFirstRender) {
                 setTimeout(() => {
                     props.onBurstReactionToggle();
-                    setIsFirstRender(false);
                 }, 200);
+                setIsFirstRender(false);
             }
         });
     }
