@@ -21,6 +21,7 @@ export default {
             " * @name DefaultBurtEmojis",
             " * @author gassastsina",
             " * @description Set shortcut emojis and emojis picker has burst by default",
+            " * @authorId 292388871381975040",
             " * @version 1.0.0",
             " */"
         ].join("\n") + '\n')
