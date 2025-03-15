@@ -122,7 +122,7 @@ export default class BDiscordAI {
             config.name,
             shortcutReactionsModule,
             key,
-            async (_, [_channelId, _messageId, _emoji, location, options]) => {
+            (_, [_channelId, _messageId, _emoji, location, options]) => {
                 if (!options.burst && location === "Message Hover Bar") {
                     options.burst = true;
                 }
