@@ -2,7 +2,7 @@ import { DiscordPickerIntention, DiscordPremiumType, LOG_PREFIX } from "./consta
 import { config, getSetting, SETTING_BURST_EMOJIS_PICKER, SETTING_BURST_SHORTCUT_REACTIONS } from "./settings";
 import { LogLevel, SettingConfigElement, SettingItem, UserStore } from "./types";
 
-export default class BDiscordAI {
+export default class DefaultBurstEmojis {
     private _emojiPickerPatch: ReturnType<typeof BdApi.Patcher.before> | undefined = undefined;
     private _shortcutReactionsPatch: ReturnType<typeof BdApi.Patcher.before> | undefined = undefined;
 

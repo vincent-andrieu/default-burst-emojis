@@ -18,11 +18,13 @@ export default {
         }),
         banner(() => [
             "/**",
-            " * @name DefaultBurtEmojis",
+            " * @name DefaultBurstEmojis",
             " * @author gassastsina",
             " * @description Set shortcut emojis and emojis picker has burst by default",
-            " * @authorId 292388871381975040",
             " * @version 1.0.0",
+            " * @authorId 292388871381975040",
+            " * @source https://github.com/vincent-andrieu/default-burst-emojis",
+            " * @updateUrl https://raw.githubusercontent.com/vincent-andrieu/default-burst-emojis/refs/heads/main/build/default-burst-emojis.plugin.js",
             " */"
         ].join("\n") + '\n')
     ]
