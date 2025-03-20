@@ -1,7 +1,7 @@
 /**
  * @name DefaultBurstEmojis
  * @author gassastsina
- * @description Set shortcut emojis and emojis picker has burst by default
+ * @description Set shortcut emojis and emojis picker has burst by default.
  * @version 1.0.0
  * @authorId 292388871381975040
  * @source https://github.com/vincent-andrieu/default-burst-emojis
