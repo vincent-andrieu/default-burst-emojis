@@ -1,15 +1,23 @@
 import { DiscordPickerIntention, DiscordPremiumType, LOG_PREFIX } from "./constants";
-import { config, getSetting, SETTING_BURST_EMOJIS_PICKER, SETTING_BURST_SHORTCUT_REACTIONS } from "./settings";
+import { config, getSetting, SETTING_BURST_EMOJIS_PICKER, SETTING_BURST_SHORTCUT_REACTIONS, SETTING_CHECK_UPDATES } from "./settings";
 import { LogLevel, SettingConfigElement, SettingItem, UserStore } from "./types";
+import { UpdateManager } from "./updates";
 
 export default class DefaultBurstEmojis {
     private _emojiPickerPatch: ReturnType<typeof BdApi.Patcher.before> | undefined = undefined;
     private _shortcutReactionsPatch: ReturnType<typeof BdApi.Patcher.before> | undefined = undefined;
 
+    private _updateManager?: UpdateManager;
+
     start() {
         console.warn(LOG_PREFIX, "Started");
         const userStore = BdApi.Webpack.getStore<UserStore>("UserStore");
         const user = userStore?.getCurrentUser();
+
+        this._updateManager = new UpdateManager(this._log.bind(this));
+        if (getSetting<boolean>(SETTING_CHECK_UPDATES)) {
+            this._updateManager.ask();
+        }
 
         if (!user) {
             return this._log("Fail to get current user");
@@ -27,6 +35,7 @@ export default class DefaultBurstEmojis {
         BdApi.Patcher.unpatchAll(config.name);
         this._emojiPickerPatch = undefined;
         this._shortcutReactionsPatch = undefined;
+        this._updateManager?.cancel();
         console.warn(LOG_PREFIX, "Stopped");
     }
 
@@ -75,8 +84,12 @@ export default class DefaultBurstEmojis {
     private _log(message: string, type: LogLevel = "error"): void {
         const logMessage = `${LOG_PREFIX} ${message}`;
 
-        BdApi.UI.showToast(logMessage, { type: type === "warn" ? "warning" : "error" });
-        console[type](logMessage);
+        BdApi.UI.showToast(logMessage, { type: type === "warn" ? "warning" : type });
+        if (type !== "success") {
+            console[type](logMessage);
+        } else {
+            console.log(logMessage);
+        }
     }
 
     private _burstEmojisPicker() {

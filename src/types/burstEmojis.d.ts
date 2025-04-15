@@ -1,1 +1,1 @@
-export type LogLevel = "error" | "warn";
+export type LogLevel = "success" | "error" | "warn";

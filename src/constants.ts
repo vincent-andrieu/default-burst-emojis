@@ -1,6 +1,9 @@
 import { config } from "./settings";
 
 export const LOG_PREFIX = `[${config.name}]`;
+export const PLUGIN_FILE_NAME = "default-burst-emojis.plugin.js";
+export const GITHUB_BRANCH = "add-check-updates";
+export const GITHUB_SOURCE = `https://raw.githubusercontent.com/vincent-andrieu/default-burst-emojis/refs/heads/${GITHUB_BRANCH}/build/${PLUGIN_FILE_NAME}`;
 
 export enum DiscordPickerIntention {
     REACTION = 0,

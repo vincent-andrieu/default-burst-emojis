@@ -4,6 +4,7 @@ const name = "DefaultBurtEmojis";
 
 export const SETTING_BURST_SHORTCUT_REACTIONS = "burstShortcutReactions";
 export const SETTING_BURST_EMOJIS_PICKER = "burstEmojisPicker";
+export const SETTING_CHECK_UPDATES = "checkUpdates";
 
 export const config: {
     name: string;
@@ -26,6 +27,14 @@ export const config: {
             value: BdApi.Data.load(name, SETTING_BURST_SHORTCUT_REACTIONS) ?? true,
             defaultValue: true,
             note: "Burst emojis when hovering a message"
+        },
+        {
+            type: "switch",
+            id: SETTING_CHECK_UPDATES,
+            name: "Check for updates",
+            note: "Check for updates on plugin startup",
+            value: BdApi.Data.load(name, SETTING_CHECK_UPDATES) ?? true,
+            defaultValue: true
         }
     ]
 };
