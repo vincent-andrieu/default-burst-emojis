@@ -94,52 +94,92 @@ export default class DefaultBurstEmojis {
 
     private _burstEmojisPicker() {
         if (!getSetting<boolean>(SETTING_BURST_EMOJIS_PICKER)) return;
-        const moduleFilter = BdApi.Webpack.Filters.byStrings("pickerIntention", "onBurstReactionToggle");
-        const emojiPickerHeaderModule = BdApi.Webpack.getModule<Record<string, unknown>>(
-            (module) => Object.values(module).some((subModule) => moduleFilter(subModule)),
-            { defaultExport: false }
-        );
-        const key = emojiPickerHeaderModule
-            ? Object.keys(emojiPickerHeaderModule).find((key) => moduleFilter(emojiPickerHeaderModule[key]))
+
+        const renderFilter = (subModule: unknown): boolean => {
+            const candidate = subModule as { render?: unknown; type?: { render?: unknown } } | undefined;
+            const renderFn = candidate?.render ?? (candidate?.type as { render?: unknown } | undefined)?.render;
+
+            if (typeof renderFn !== "function") return false;
+            const source = renderFn.toString();
+            return source.includes("pickerIntention") && source.includes("onBurstReactionToggle");
+        };
+        const emojiPickerModule = BdApi.Webpack.getModule<Record<string, unknown>>((module) => Object.values(module).some(renderFilter), {
+            defaultExport: false
+        });
+        const exportKey = emojiPickerModule
+            ? Object.keys(emojiPickerModule).find((moduleKey) => renderFilter(emojiPickerModule[moduleKey]))
             : undefined;
 
-        if (!key) {
+        if (!exportKey || !emojiPickerModule) {
             return this._log("Fail to burst emojis picker");
         }
-        this._emojiPickerPatch = BdApi.Patcher.before(config.name, emojiPickerHeaderModule, key, (_, [props]) => {
+        const wrapper = emojiPickerModule[exportKey] as { render?: unknown; type?: { render?: unknown } };
+        const renderHost = (wrapper.render ? wrapper : wrapper.type) as Record<string, unknown>;
+
+        this._emojiPickerPatch = BdApi.Patcher.after(config.name, renderHost, "render", (_, args, returnValue) => {
+            const [props] = args as [{ pickerIntention?: number } | undefined];
+
+            if (props?.pickerIntention !== DiscordPickerIntention.REACTION) return;
             const [isFirstRender, setIsFirstRender] = BdApi.React.useState(true);
 
-            if (props.pickerIntention === DiscordPickerIntention.REACTION && isFirstRender) {
-                setTimeout(() => {
-                    props.onBurstReactionToggle();
-                }, 200);
+            if (!isFirstRender) return;
+            const toggle = this._findBurstReactionToggle(returnValue);
+
+            if (toggle) {
+                setTimeout(() => toggle(), 200);
                 setIsFirstRender(false);
             }
         });
     }
 
+    private _findBurstReactionToggle(element: unknown): (() => void) | undefined {
+        if (!element || typeof element !== "object") return undefined;
+        const node = element as {
+            props?: { isBurstReaction?: boolean; onBurstReactionToggle?: () => void; children?: unknown };
+        };
+
+        if (node.props?.onBurstReactionToggle && node.props.isBurstReaction === false) {
+            return node.props.onBurstReactionToggle;
+        }
+        const children = Array.isArray(element) ? element : node.props?.children;
+
+        if (!children) return undefined;
+        const childArray = Array.isArray(children) ? children : [children];
+
+        for (const child of childArray) {
+            const found = this._findBurstReactionToggle(child);
+
+            if (found) {
+                return found;
+            }
+        }
+        return undefined;
+    }
+
     private _burstShortcutReactions() {
         if (!getSetting<boolean>(SETTING_BURST_SHORTCUT_REACTIONS)) return;
-        const moduleFilter = BdApi.Webpack.Filters.byStrings("MESSAGE_REACTION_ADD", "burst", "Message Shortcut");
-        const shortcutReactionsModule = BdApi.Webpack.getModule<Record<string, unknown>>((module) =>
+        const addReactionPatch = this._patchAddReaction("Message Hover Bar", "Fail to burst shortcut reaction");
+
+        if (addReactionPatch) {
+            this._shortcutReactionsPatch = addReactionPatch;
+        }
+    }
+
+    private _patchAddReaction(targetLocation: string, errorMessage: string): ReturnType<typeof BdApi.Patcher.before> | undefined {
+        const moduleFilter = BdApi.Webpack.Filters.byStrings("MESSAGE_REACTION_ADD", "burst");
+        const addReactionModule = BdApi.Webpack.getModule<Record<string, unknown>>((module) =>
             Object.values(module).some((subModule) => moduleFilter(subModule))
         );
-        const key = shortcutReactionsModule
-            ? Object.keys(shortcutReactionsModule).find((key) => moduleFilter(shortcutReactionsModule[key]))
-            : undefined;
+        const key = addReactionModule ? Object.keys(addReactionModule).find((moduleKey) => moduleFilter(addReactionModule[moduleKey])) : undefined;
 
         if (!key) {
-            return this._log("Fail to burst shortcut reaction");
+            this._log(errorMessage);
+            return undefined;
         }
-        this._shortcutReactionsPatch = BdApi.Patcher.before(
-            config.name,
-            shortcutReactionsModule,
-            key,
-            (_, [_channelId, _messageId, _emoji, location, options]) => {
-                if (!options.burst && location === "Message Hover Bar") {
-                    options.burst = true;
-                }
+        return BdApi.Patcher.before(config.name, addReactionModule, key, (_, [_channelId, _messageId, _emoji, location, options]) => {
+            if (location === targetLocation && options && !options.burst) {
+                options.burst = true;
             }
-        );
+        });
     }
 }
